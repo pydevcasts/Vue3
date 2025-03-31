@@ -1,220 +1,164 @@
-### **📌 صفحه ۱۲ - مدیریت درخواست‌های غیرهمزمان (Async & Await) در Vue.js**  
-
-در این صفحه، به بررسی **`async` و `await`** در Vue.js می‌پردازیم. این ویژگی‌ها به ما کمک می‌کنند که **درخواست‌های غیرهمزمان (async requests)** را مدیریت کنیم و تجربه بهتری در کار با **API‌ها، دریافت و ارسال داده‌ها و عملیات زمان‌بر** داشته باشیم.  
+در Vue.js 3، برای مدیریت وضعیت (State Management) با **Composition API** می‌توان از `reactive` و `ref` استفاده کرد. در اینجا چند روش مختلف برای مدیریت وضعیت را بررسی می‌کنیم.
 
 ---
 
-## **۱. عملیات همزمان (Synchronous) vs. غیرهمزمان (Asynchronous)**  
-
-📌 **مشکل: درخواست‌های API ممکن است چند ثانیه طول بکشند. چطور بدون مسدود شدن صفحه، نتیجه را دریافت کنیم؟**  
-
-🛑 **در عملیات همزمان (Synchronous):**  
-- **دستورات پشت سر هم اجرا می‌شوند.**  
-- اگر یک درخواست زمان‌بر باشد، **بقیه کدها متوقف می‌شوند.**  
-
-✅ **در عملیات غیرهمزمان (Asynchronous):**  
-- درخواست‌های زمان‌بر (مثل **دریافت داده از API**) **صفحه را متوقف نمی‌کنند.**  
-- **کدهای بعدی اجرا می‌شوند و نتیجه بعداً دریافت می‌شود.**  
-
----
-
-## **۲. استفاده از `async` و `await` در Vue.js**  
-
-📌 **در Vue 3 می‌توانیم از `async` و `await` در `setup()` یا داخل متدهای کامپوننت استفاده کنیم.**  
-
-### **📍 ۱. درخواست API با `fetch()` در `setup()`**  
+### **۱. استفاده از `reactive` برای مدیریت وضعیت پیچیده‌تر**
+`reactive` یک شیء قابل واکنش ایجاد می‌کند که برای مدیریت وضعیت‌هایی با چندین ویژگی مناسب است.
 
 ```vue
+<script setup>
+import { reactive } from 'vue';
+
+const state = reactive({
+  count: 0,
+  user: {
+    name: 'Ali',
+    age: 25
+  }
+});
+
+const increment = () => {
+  state.count++;
+};
+
+const updateName = (newName) => {
+  state.user.name = newName;
+};
+</script>
+
 <template>
   <div>
-    <button @click="fetchData">Load Data</button>
-    <p v-if="loading">Loading...</p>
-    <p v-else>{{ data }}</p>
+    <p>Count: {{ state.count }}</p>
+    <button @click="increment">Increase</button>
+
+    <p>User: {{ state.user.name }} - {{ state.user.age }}</p>
+    <input v-model="state.user.name" />
   </div>
 </template>
+```
 
-<script>
+---
+
+### **۲. استفاده از `ref` برای مقادیر ساده**
+`ref` یک مقدار واکنشی ساده ایجاد می‌کند که برای مقدارهای منفرد مناسب است.
+
+```vue
+<script setup>
 import { ref } from 'vue';
 
-export default {
-  setup() {
-    const data = ref(null);
-    const loading = ref(false);
+const count = ref(0);
 
-    const fetchData = async () => {
-      loading.value = true;
-      try {
-        const response = await fetch("https://jsonplaceholder.typicode.com/posts/1");
-        const result = await response.json();
-        data.value = result.title;
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    return { data, loading, fetchData };
-  }
+const increment = () => {
+  count.value++;
 };
 </script>
-```
 
-✅ **در این مثال:**  
-- با کلیک روی دکمه، تابع `fetchData()` اجرا می‌شود.  
-- مقدار `loading` برای نمایش پیام **"Loading..."** تغییر می‌کند.  
-- **از `await fetch(url)` برای دریافت داده‌ها استفاده شده است.**  
-- در **بلاک `finally` مقدار `loading` را `false` می‌کنیم** تا پیام "Loading..." ناپدید شود.  
+<template>
+  <div>
+    <p>Count: {{ count }}</p>
+    <button @click="increment">Increase</button>
+  </div>
+</template>
+```
 
 ---
 
-## **۳. اجرای درخواست API در `onMounted()`**  
-
-📌 **اگر بخواهیم درخواست داده هنگام بارگذاری صفحه انجام شود، از `onMounted()` استفاده می‌کنیم.**  
+### **۳. استفاده از `computed` برای مقادیر وابسته**
+اگر بخواهید مقداری بر اساس وضعیت محاسبه شود، می‌توانید از `computed` استفاده کنید.
 
 ```vue
+<script setup>
+import { ref, computed } from 'vue';
+
+const count = ref(5);
+
+const doubleCount = computed(() => count.value * 2);
+</script>
+
 <template>
   <div>
-    <p v-if="loading">Loading...</p>
-    <p v-else>{{ data }}</p>
+    <p>Count: {{ count }}</p>
+    <p>Double Count: {{ doubleCount }}</p>
   </div>
 </template>
-
-<script>
-import { ref, onMounted } from 'vue';
-
-export default {
-  setup() {
-    const data = ref(null);
-    const loading = ref(false);
-
-    const fetchData = async () => {
-      loading.value = true;
-      try {
-        const response = await fetch("https://jsonplaceholder.typicode.com/posts/2");
-        const result = await response.json();
-        data.value = result.title;
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    onMounted(fetchData); // درخواست هنگام بارگذاری کامپوننت اجرا شود
-
-    return { data, loading };
-  }
-};
-</script>
 ```
-
-✅ **در این مثال:**  
-- درخواست API در `onMounted()` اجرا می‌شود.  
-- **نیازی به کلیک دکمه نیست و داده هنگام بارگذاری صفحه دریافت می‌شود.**  
 
 ---
 
-## **۴. مدیریت چند درخواست همزمان با `Promise.all()`**  
+### **۴. مدیریت وضعیت به کمک Composition Functions (ساختارهای قابل استفاده مجدد)**
+می‌توانیم وضعیت را در یک فایل جداگانه مدیریت کنیم و در کامپوننت‌های مختلف از آن استفاده کنیم.
 
-📌 **گاهی نیاز داریم همزمان چندین API را درخواست کنیم و منتظر دریافت همه آن‌ها باشیم.**  
-
-### **📍 ۳. درخواست همزمان چند API و نمایش داده‌ها**  
-
-```vue
-<template>
-  <div>
-    <button @click="fetchAllData">Load All Data</button>
-    <p v-if="loading">Loading...</p>
-    <ul v-else>
-      <li v-for="(item, index) in data" :key="index">{{ item.title }}</li>
-    </ul>
-  </div>
-</template>
-
-<script>
+#### **ایجاد یک Composable (useCounter.js)**
+```js
+// composables/useCounter.js
 import { ref } from 'vue';
 
-export default {
-  setup() {
-    const data = ref([]);
-    const loading = ref(false);
+export function useCounter() {
+  const count = ref(0);
+  
+  const increment = () => {
+    count.value++;
+  };
 
-    const fetchAllData = async () => {
-      loading.value = true;
-      try {
-        const [res1, res2] = await Promise.all([
-          fetch("https://jsonplaceholder.typicode.com/posts/1").then(res => res.json()),
-          fetch("https://jsonplaceholder.typicode.com/posts/2").then(res => res.json())
-        ]);
-        data.value = [res1, res2];
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    return { data, loading, fetchAllData };
-  }
-};
-</script>
+  return { count, increment };
+}
 ```
 
-✅ **در این مثال:**  
-- **از `Promise.all()` برای اجرای همزمان دو درخواست API استفاده شده است.**  
-- **فقط زمانی که هر دو درخواست دریافت شوند، داده‌ها نمایش داده می‌شوند.**  
+#### **استفاده از آن در کامپوننت**
+```vue
+<script setup>
+import { useCounter } from '@/composables/useCounter';
+
+const { count, increment } = useCounter();
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ count }}</p>
+    <button @click="increment">Increase</button>
+  </div>
+</template>
+```
 
 ---
 
-## **۵. خطایابی درخواست‌های `async` در Vue.js**  
+### **۵. مدیریت وضعیت سراسری با `pinia` (جایگزین Vuex)**
+برای مدیریت وضعیت سراسری، بهتر است از `pinia` که در Vue 3 توصیه شده است، استفاده کنیم.
 
-📌 **چگونه خطاهای درخواست‌های `async` را مدیریت کنیم؟**  
-1️⃣ **استفاده از `try...catch` برای مدیریت خطاها**  
-2️⃣ **نمایش پیام خطا برای کاربران**  
-
-```vue
-<template>
-  <div>
-    <button @click="fetchData">Fetch Data</button>
-    <p v-if="loading">Loading...</p>
-    <p v-if="error" style="color: red;">{{ error }}</p>
-    <p v-else>{{ data }}</p>
-  </div>
-</template>
-
-<script>
-import { ref } from 'vue';
-
-export default {
-  setup() {
-    const data = ref(null);
-    const loading = ref(false);
-    const error = ref(null);
-
-    const fetchData = async () => {
-      loading.value = true;
-      error.value = null;
-      try {
-        const response = await fetch("https://invalid-url.com/api");
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const result = await response.json();
-        data.value = result.title;
-      } catch (err) {
-        error.value = err.message;
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    return { data, loading, error, fetchData };
-  }
-};
-</script>
+#### **نصب `pinia`**
+```sh
+npm install pinia
 ```
 
-✅ **در این مثال:**  
-- اگر درخواست موفق نباشد، **پیام خطا نمایش داده می‌شود.**  
-- **متغیر `error` برای نمایش پیام خطا در UI استفاده شده است.**  
+#### **ایجاد Store**
+```js
+// stores/counter.js
+import { defineStore } from 'pinia';
 
+export const useCounterStore = defineStore('counter', {
+  state: () => ({
+    count: 0
+  }),
+  actions: {
+    increment() {
+      this.count++;
+    }
+  }
+});
+```
 
+#### **استفاده در کامپوننت**
+```vue
+<script setup>
+import { useCounterStore } from '@/stores/counter';
+
+const counterStore = useCounterStore();
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ counterStore.count }}</p>
+    <button @click="counterStore.increment">Increase</button>
+  </div>
+</template>
+```
