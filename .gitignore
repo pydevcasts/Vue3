@@ -85,3 +85,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+vue-app
+./vue-app
+vue-app/*
+
+my-nuxt-app
+my-nuxt-app/*

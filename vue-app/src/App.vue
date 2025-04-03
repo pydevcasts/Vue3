@@ -1,26 +1,25 @@
-<template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
-</template>
 
-<script>
-import HelloWorld from './components/HelloWorld.vue'
-
-export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
-</script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
+  
+  <script setup>
+  import { defineAsyncComponent } from 'vue'
+  
+  const AsyncComponent = defineAsyncComponent({
+    loader: () => import('./components/ListView.vue'),
+    loadingComponent: {
+      template: '<p>⏳ در حال بارگیری...</p>'
+    },
+    errorComponent: {
+      template: '<p>❌ خطایی در بارگیری رخ داد.</p>'
+    },
+    delay: 2000,
+    timeout: 3000 // زمان انتظار ۳ ثانیه قبل از نمایش خطا
+  })
+  </script>
+  
+  <template>
+    <div>
+      <h1>صفحه اصلی</h1>
+ <AsyncComponent></AsyncComponent>
+    </div>
+  </template>
+  
