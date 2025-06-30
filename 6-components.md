@@ -52,7 +52,7 @@ import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
-  <HelloWorld name="Vue.js"/>
+  <HelloWorld username="Vue.js"/>
 </template>
 ```
 
